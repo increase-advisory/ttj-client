@@ -1,0 +1,239 @@
+{
+    "uuid": "291a1d8c-a0cf-4988-9586-47e601286ec3",
+    "lastMigration": 32,
+    "name": "TTJ API",
+    "endpointPrefix": "",
+    "latency": 0,
+    "port": 3000,
+    "hostname": "",
+    "folders": [],
+    "routes": [
+        {
+            "uuid": "885d9e23-fd58-4955-b364-659769c6e983",
+            "type": "http",
+            "documentation": "",
+            "method": "post",
+            "endpoint": "api/v1/infer",
+            "responses": [
+                {
+                    "uuid": "3e0275f7-4a6a-47cd-b41f-514503c68b20",
+                    "body": "{\n  name:\"A test user\",\n}",
+                    "latency": 0,
+                    "statusCode": 200,
+                    "label": "infer by uuid",
+                    "headers": [],
+                    "bodyType": "INLINE",
+                    "filePath": "",
+                    "databucketID": "",
+                    "sendFileAsBody": false,
+                    "rules": [
+                        {
+                            "target": "query",
+                            "modifier": "apiToken",
+                            "value": "valid-api-token",
+                            "invert": false,
+                            "operator": "equals"
+                        },
+                        {
+                            "target": "query",
+                            "modifier": "uuid",
+                            "value": "valid-uuid",
+                            "invert": false,
+                            "operator": "equals"
+                        }
+                    ],
+                    "rulesOperator": "AND",
+                    "disableTemplating": false,
+                    "fallbackTo404": false,
+                    "default": true,
+                    "crudKey": "id",
+                    "callbacks": []
+                },
+                {
+                    "uuid": "448c200e-4b85-43b1-b31d-80a7a90e0ccc",
+                    "body": "{\n  a_property:\"a value\",\n}",
+                    "latency": 0,
+                    "statusCode": 200,
+                    "label": "infer by schema",
+                    "headers": [],
+                    "bodyType": "INLINE",
+                    "filePath": "",
+                    "databucketID": "",
+                    "sendFileAsBody": false,
+                    "rules": [
+                        {
+                            "target": "query",
+                            "modifier": "apiToken",
+                            "value": "valid-api-token",
+                            "invert": false,
+                            "operator": "equals"
+                        },
+                        {
+                            "target": "body",
+                            "modifier": "schema.a_property",
+                            "value": "<string: a description>",
+                            "invert": true,
+                            "operator": "null"
+                        }
+                    ],
+                    "rulesOperator": "AND",
+                    "disableTemplating": false,
+                    "fallbackTo404": false,
+                    "default": false,
+                    "crudKey": "id",
+                    "callbacks": []
+                },
+                {
+                    "uuid": "bc7cc57e-75a7-41e1-acfa-46374bbf80e4",
+                    "body": "{ error: \"invalid API Token!\" }",
+                    "latency": 0,
+                    "statusCode": 401,
+                    "label": "a request with an invalid api token",
+                    "headers": [],
+                    "bodyType": "INLINE",
+                    "filePath": "",
+                    "databucketID": "",
+                    "sendFileAsBody": false,
+                    "rules": [
+                        {
+                            "target": "query",
+                            "modifier": "apiToken",
+                            "value": "valid-api-token",
+                            "invert": true,
+                            "operator": "equals"
+                        }
+                    ],
+                    "rulesOperator": "OR",
+                    "disableTemplating": false,
+                    "fallbackTo404": false,
+                    "default": false,
+                    "crudKey": "id",
+                    "callbacks": []
+                },
+                {
+                    "uuid": "7d3ff43a-10b3-409d-adf9-8f757e257958",
+                    "body": "{ error: \"Unauthorized\" }",
+                    "latency": 0,
+                    "statusCode": 401,
+                    "label": "infer without specifying a valid model",
+                    "headers": [],
+                    "bodyType": "INLINE",
+                    "filePath": "",
+                    "databucketID": "",
+                    "sendFileAsBody": false,
+                    "rules": [
+                        {
+                            "target": "query",
+                            "modifier": "apiToken",
+                            "value": "valid-api-token",
+                            "invert": false,
+                            "operator": "equals"
+                        },
+                        {
+                            "target": "query",
+                            "modifier": "uuid",
+                            "value": "valid-uuid",
+                            "invert": false,
+                            "operator": "equals"
+                        },
+                        {
+                            "target": "body",
+                            "modifier": "schema",
+                            "value": "",
+                            "invert": false,
+                            "operator": "null"
+                        }
+                    ],
+                    "rulesOperator": "AND",
+                    "disableTemplating": false,
+                    "fallbackTo404": false,
+                    "default": false,
+                    "crudKey": "id",
+                    "callbacks": []
+                },
+                {
+                    "uuid": "79bb690c-b8e5-438b-ae1f-b27c7058ff0d",
+                    "body": "{}",
+                    "latency": 0,
+                    "statusCode": 400,
+                    "label": "",
+                    "headers": [],
+                    "bodyType": "INLINE",
+                    "filePath": "",
+                    "databucketID": "",
+                    "sendFileAsBody": false,
+                    "rules": [
+                        {
+                            "target": "body",
+                            "modifier": "input",
+                            "value": "",
+                            "invert": false,
+                            "operator": "null"
+                        },
+                        {
+                            "target": "body",
+                            "modifier": "languageModel",
+                            "value": "",
+                            "invert": false,
+                            "operator": "null"
+                        }
+                    ],
+                    "rulesOperator": "OR",
+                    "disableTemplating": false,
+                    "fallbackTo404": false,
+                    "default": false,
+                    "crudKey": "id",
+                    "callbacks": []
+                }
+            ],
+            "responseMode": null
+        }
+    ],
+    "rootChildren": [
+        {
+            "type": "route",
+            "uuid": "885d9e23-fd58-4955-b364-659769c6e983"
+        }
+    ],
+    "proxyMode": false,
+    "proxyHost": "",
+    "proxyRemovePrefix": false,
+    "tlsOptions": {
+        "enabled": false,
+        "type": "CERT",
+        "pfxPath": "",
+        "certPath": "",
+        "keyPath": "",
+        "caPath": "",
+        "passphrase": ""
+    },
+    "cors": true,
+    "headers": [
+        {
+            "key": "Content-Type",
+            "value": "application/json"
+        }
+    ],
+    "proxyReqHeaders": [
+        {
+            "key": "",
+            "value": ""
+        }
+    ],
+    "proxyResHeaders": [
+        {
+            "key": "",
+            "value": ""
+        }
+    ],
+    "data": [
+        {
+            "uuid": "7f853303-b05d-4d32-ab05-5dafa31a75e5",
+            "id": "8y3q",
+            "name": "Users",
+            "documentation": "",
+            "value": "[\n  {{#repeat 50}}\n  {\n    \"id\": \"{{faker 'string.uuid'}}\",\n    \"username\": \"{{faker 'internet.userName'}}\"\n  }\n  {{/repeat}}\n]"
+        }
+    ],
+    "callbacks": []
+}
