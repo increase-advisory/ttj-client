@@ -1,4 +1,4 @@
-import { fetchRetry } from './helper';
+import { fetchRetry } from './helper.js';
 
 export class TTJClient {
     constructor(apiKey) {
