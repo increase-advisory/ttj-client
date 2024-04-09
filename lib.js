@@ -5,9 +5,16 @@ export class TTJClient {
         this.apiKey = apiKey;
     }
 
+    /**
+     * 
+     * @template T
+     * @param {string} text the text to extract the data from
+     * @param {string} uuid the uuid of the schema to use
+     * @returns {Promise<T>}
+     */
     async inferByUUID(text, uuid) {
         const url = `https://text-to-json.com/api/v1/infer?apiToken=${this.apiKey}&uuid=${uuid}`;
-
+        /** @type {any} */
         const response = await fetchRetry(url, {
             method: 'POST',
             headers: {
@@ -20,9 +27,22 @@ export class TTJClient {
         return response;
     }
 
+    /**
+     * @typedef {'openai/gpt-3.5-turbo'|'openai/gpt-4'|'azure/gpt-35-turbo'|'vertex/text-bison@001'|'ollama/mixtral'|'ollama/llama2'|'ollama/llama2:13b'|'ollama/gemma'} SupportedLanguageModel
+     * @typedef {SupportedLanguageModel | 'vertex/gemini-1.0-pro-vision-001'} SupportedVisionModel
+     */
+
+    /**
+     * @template T
+     * @param {string} text the text to extract the data from
+     * @param {T} schema the schema for the data (see https://text-to-json.com/en/docs/#defining-a-schema for more information on schemas)
+     * @param {SupportedLanguageModel} languageModel 
+     * @returns {Promise<ReturnType<TTJParsingFunction<T>>>}
+     */
     async inferBySchema(text, schema, languageModel) {
         const url = `https://text-to-json.com/api/v1/infer?apiToken=${this.apiKey}`;
-        languageModel = languageModel || ('gpt-3.5-turbo');
+        languageModel = languageModel || ('openai/gpt-3.5-turbo');
+        /** @type {any} */
         const response = await fetchRetry(url, {
             method: 'POST',
             headers: {
@@ -37,67 +57,61 @@ export class TTJClient {
         return response;
     }
 
-    async parseTTJ(text, schema, languageModel) {
-        if (!text) {
-            return null;
-        }
-        if (typeof schema === 'string' && schema.length === 36) {
-            if (languageModel) {
-                throw new Error('languageModel is not supported for UUID inference');
-            }
-            return await this.inferByUUID(text, schema);
-        }
-        else if (typeof schema === 'object') {
-            return await this.inferBySchema(text, schema, languageModel);
-        }
-        else {
-            throw new Error('invalid schema');
-        }
-    }
+    /**
+     * @typedef {{
+     *  type:'raw'|'padded',
+     *  name: SupportedLanguageModel,
+     *  maxcount?:number
+     * }} TextParsingStep
+     */
 
-
-    async mergeOCRResults(text1, text2) {
-        const url = `https://text-to-json.com/api/v1/mergeOCR?apiToken=${this.apiKey}`;
-
-        const response = await fetchRetry(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                text1,
-                text2
-            })
-        }).then(r => r.text());
-        try {
-            const parsedResponse = JSON.parse(response);
-            return parsedResponse.answer;
-        } catch (err) {
-            throw new Error('mergeOCRResults failed: ' + response);
-        }
-    }
-
+    /**
+     * @typedef {{
+     * type:'image',
+     * name: SupportedVisionModel,
+     * maxcount?:number
+     * }} ImageParsingStep
+     */
 
     /**
      * @template T
-     * @callback Parsing     
+     * @callback ReturnProbabilitiesFunction
      * @param {T} schema
-     * @returns {T extends (string)?{value:any,probability:number}[]: T extends (infer U)[] ? ReturnType<Parsing<U>>[]: T extends {} ? { [K in keyof T]?: ReturnType<Parsing<T[K]>> } : {value:any,probability:number}[]}
+     * @returns {T extends (string)?{value:any,probability:number}[]: T extends (infer U)[] ? ReturnType<ReturnProbabilitiesFunction<U>>[]: T extends {} ? { [K in keyof T]?: ReturnType<ReturnProbabilitiesFunction<T[K]>> } : {value:any,probability:number}[]}
+     * */
+
+    /**
+     * @template T
+     * @callback TTJParsingFunction
+     * @param {T} schema
+     * @returns {{[K in keyof T]?:T[K]extends {}?ReturnType<TTJParsingFunction<T[K]>>:T[K]}}
      * */
 
 
     /**
      * 
      * @template S
-     * @param {Buffer|Uint8Array|string} data
-     * @param {string} mimetype
+     * @template {boolean} R
+     * @param {Buffer|Uint8Array|string} data a pdf, png, or jpeg file as a buffer, uint8array or dataurl
+     * @param {'application/pdf'|'image/png'|'image/jpeg'} mimetype the mimetype of the data (e.g. 'application/pdf', 'image/png', 'image/jpeg')
      * @param {S} schema
-     * @param {{ name: string, maxcount?: number, type: string, skip?:number}[]=} parsingsteps
-     * @returns { Promise <{ results: ReturnType<Parsing<S>>, codeData: { data: { type: string, string: string, data: string }, position: { orientation: string, quadrilateral: number[][] } }[] | undefined } >}
+     * @param {(TextParsingStep|ImageParsingStep)[]=} parsingsteps
+     * @param {R=} returnprobabilities
+     * @returns { Promise <{ results: R extends true ? ReturnType<ReturnProbabilitiesFunction<S>> : ReturnType<TTJParsingFunction<S>>, codeData: { data: { type: string, string: string, data: string }, position: { orientation: string, quadrilateral: number[][] } }[] | undefined } >}
      * }
      * */
-    async parseDocumentBySchema(data, mimetype, schema, parsingsteps) {
+    async inferDocumentBySchema(data, mimetype, schema, parsingsteps, returnprobabilities) {
         const url = `https://text-to-json.com/api/v1/inferDocument?apiToken=${this.apiKey}`;
+
+        //if data is a uint8array, convert it to a buffer
+        if (data instanceof Uint8Array) {
+            data = Buffer.from(data);
+        }
+
+        //if data is a buffer, encode it as dataurl
+        if (data instanceof Buffer) {
+            data = `data:${mimetype};base64,${data.toString('base64')}`;
+        }
 
         const parsingRequestResponse = await fetch(url, {
             method: 'POST',
@@ -109,19 +123,33 @@ export class TTJClient {
                 data,
                 mimetype,
                 parsingsteps,
-                returnprobabilities: true
+                returnprobabilities
             })
         }).then(r => r.json());
+        if (!parsingRequestResponse.id) {
+            if (parsingRequestResponse.error) {
+                if (typeof parsingRequestResponse.error === 'string' && /^\d+:\d+/.test(parsingRequestResponse.error)) {
+                    throw new Error(parsingRequestResponse.error.match(/^(\d+:\d+:?\s*)(.*)/)[2]);
+                }
+                throw new Error(parsingRequestResponse.error);
+            }
+            throw new Error('TTJ parsing failed: ' + JSON.stringify(parsingRequestResponse));
+        }
         const taskId = parsingRequestResponse.id;
 
         let response;
-        // eslint-disable-next-line no-constant-condition
+
+        let failed = 0;
         while (true) {
             try {
                 await new Promise(r => setTimeout(r, 1000));
                 response = await fetch(`https://text-to-json.com/api/v1/document?id=${taskId}&apiToken=${this.apiKey}`).then(r => r.json());
             } catch (e) {
                 console.error(e);
+                failed++;
+                if (failed > 10) {
+                    throw e;
+                }
             }
             if (response.status === 'finished') {
                 console.log(`got TTJ response for ${taskId} after ${new Date(response.finished).getTime() - new Date(response.started).getTime()}ms`);
