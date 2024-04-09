@@ -1,6 +1,6 @@
 {
     "name": "ttj-client",
-    "version": "0.0.2",
+    "version": "0.0.3",
     "description": "the official client library for https://text-to-json.com",
     "main": "lib.js",
     "type": "module",
