@@ -21,7 +21,11 @@ To use the ttj-client SDK for Node.js, create an instance of `TTJClient`by passi
 You can generate an API Key on the [Model](https://text-to-json.com/account/viewmodel) page by clicking `Save` and then `Select API Token`-> `Generate new API Token`.
 
 ```javascript
-const ttjClient = new TTJClient(TTJ_API_TOKEN);
+async function infer(){
+    const { TTJClient } = await import('ttj-client');
+    const ttjClient = new TTJClient(TTJ_API_TOKEN);
+    //...
+}
 ```
 
 ## Querying the Document API
@@ -29,7 +33,8 @@ const ttjClient = new TTJClient(TTJ_API_TOKEN);
 You can extract the data defined in your [schema](https://text-to-json.com/en/docs#defining-a-schema) from any pdf, png, or jpeg file. Just pass the file as a `Buffer` or `string` as the first parameter and the `mimetype` as the second parameter. Define your `schema` as the third parameter. 
 
 ```javascript
-async function runQuery(){
+async function infer(){
+    //...
     const response = await ttjClient.inferDocumentBySchema(
         await fs.promises.readFile('tests/testfiles/invoice.jpg'),
          'image/jpeg', 
@@ -72,7 +77,8 @@ console.log(JSON.stringify(response.results));
 Set `returnprobabilities` (the fourth parameter) to true to get options and their probability for every value.
 
 ```javascript
-async function runQuery(){
+async function infer(){
+    //...
     const response = await ttjClient.inferDocumentBySchema(
         await fs.promises.readFile('tests/testfiles/invoice.jpg'),
          'image/jpeg', 
@@ -134,20 +140,23 @@ console.log(JSON.stringify(response.results));
 You can extract the data defined in your [schema](https://text-to-json.com/en/docs#defining-a-schema) from any text. Just pass the text as the first parameter and define your `schema` as the second parameter. 
 
 ```javascript
-const response = await ttjClient.inferBySchema(
-    'company name: Acme Corp\na street 123\n1234 Town', 
-    {
-        customer: {
-            company_name: 'string',
-            address: {
-                street: 'string',
-                zip_code: 'number',
-                city: 'string'
+async function infer(){
+    //...
+    const response = await ttjClient.inferBySchema(
+        'company name: Acme Corp\na street 123\n1234 Town', 
+        {
+            customer: {
+                company_name: 'string',
+                address: {
+                    street: 'string',
+                    zip_code: 'number',
+                    city: 'string'
+                }
             }
-        }
-    }, 
-    'openai/gpt-3.5-turbo');
-console.log(JSON.stringify(response));
+        }, 
+        'openai/gpt-3.5-turbo');
+    console.log(JSON.stringify(response));
+}
 /* logs
 {
     customer: {
@@ -167,8 +176,13 @@ console.log(JSON.stringify(response));
 You can also use a model defined on the website using `inferByUUID`.
 
 ```javascript
-const response = await ttjClient.inferByUUID('company name: acme corp\na street 123\n1234 Town', YOUR_UUID);
-console.log(JSON.stringify(response));
+async function infer(){
+    //...
+    const response = await ttjClient.inferByUUID('company name: acme corp\na street 123\n1234 Town', YOUR_UUID);
+    console.log(JSON.stringify(response));
+}
+
+infer();
 /* logs
 {
     customer: {
