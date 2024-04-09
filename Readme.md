@@ -1,6 +1,6 @@
 # ttj-client SDK for Node.js
 
-The ttj-client SDK for Node.js lets you use the text-to-json.com API to LLM powered data extraction features for your applications.
+The ttj-client SDK for Node.js lets you use the [text-to-json.com](https://text-to-json.com) API to LLM powered data extraction features for your applications.
 
 For API docs see [https://text-to-json.com/docs](https://text-to-json.com/docs).
 
