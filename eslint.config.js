@@ -30,5 +30,9 @@ export default [
                 'always'
             ],
             'no-unused-vars': 'warn',
-        }
+        },
+        files: [
+            'src/**/*.js',
+            'tests/**/*.js',
+        ]
     }];
