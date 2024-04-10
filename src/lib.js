@@ -112,7 +112,7 @@ export class TTJClient {
         if (data instanceof Buffer) {
             data = `data:${mimetype};base64,${data.toString('base64')}`;
         }
-
+        /** @type {any} */
         const parsingRequestResponse = await fetch(url, {
             method: 'POST',
             headers: {
@@ -137,6 +137,7 @@ export class TTJClient {
         }
         const taskId = parsingRequestResponse.id;
 
+        /** @type {any} */
         let response;
 
         let failed = 0;

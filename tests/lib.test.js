@@ -1,5 +1,5 @@
 import { expect, test } from '@jest/globals';
-import { TTJClient } from '../lib';
+import { TTJClient } from '../src/lib';
 
 const TTJ_API_TOKEN = process.env.TTJ_API_TOKEN;
 const DEMO_UUID = process.env.DEMO_UUID;

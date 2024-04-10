@@ -2,12 +2,20 @@
     "name": "ttj-client",
     "version": "0.0.3",
     "description": "the official client library for https://text-to-json.com",
-    "main": "lib.js",
+    "main": "dist/cjs/lib.js",
+    "module": "dist/esm/lib.js",
     "type": "module",
+    "exports": {
+        ".": {
+            "import": "./dist/esm/lib.js",
+            "require": "./dist/cjs/lib.js"
+        }
+    },
     "scripts": {
         "mock": "npx @mockoon/cli start -d ./mocks/ttj.json",
         "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
-        "lint": "eslint ."
+        "lint": "eslint .",
+        "build": "rm -fr dist/* && tsc -p jsconfig-esm.json && tsc -p jsconfig-cjs.json && ./fixup.sh"
     },
     "author": "",
     "license": "ISC",
