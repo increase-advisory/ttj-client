@@ -17,8 +17,8 @@ npm install ttj-client
 
 ## Initiate the `TTJClient` class
 
-To use the ttj-client SDK for Node.js, create an instance of `TTJClient`by passing it your API Key.
-You can generate an API Key on the [Model](https://text-to-json.com/account/viewmodel) page by clicking `Save` and then `Select API Token`-> `Generate new API Token`.
+To use the ttj-client SDK for Node.js, create an instance of `TTJClient` by passing it your API Key.
+You can generate an API Key on the [Usage](https://text-to-json.com/account/usage) page by clicking `Create new API Key`.
 
 ```javascript
 async function infer(){
