@@ -1,5 +1,12 @@
 import { fetchRetry } from './helper.js';
 
+/**
+ * @typedef {{
+ * value:any,
+ * probability:number
+ * }} ProbabilityResult
+*/
+
 export class TTJClient {
     constructor(apiKey) {
         this.apiKey = apiKey;
@@ -77,7 +84,7 @@ export class TTJClient {
      * @template T
      * @callback ReturnProbabilitiesFunction
      * @param {T} schema
-     * @returns {T extends (string)?{value:any,probability:number}[]: T extends (infer U)[] ? ReturnType<ReturnProbabilitiesFunction<U>>[]: T extends {} ? { [K in keyof T]?: ReturnType<ReturnProbabilitiesFunction<T[K]>> } : {value:any,probability:number}[]}
+     * @returns {T extends (string)?ProbabilityResult[]: T extends (infer U)[] ? ReturnType<ReturnProbabilitiesFunction<U>>[]: T extends {} ? { [K in keyof T]?: ReturnType<ReturnProbabilitiesFunction<T[K]>> } : ProbabilityResult[]}
      * */
 
     /**
