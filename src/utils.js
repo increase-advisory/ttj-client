@@ -20,6 +20,7 @@ export class TTJUtils {
         if (Array.isArray(result)) {
             let arrayResult = result;
             if (result[0] && result[0].value && typeof result[0].probability === 'number') {
+                // @ts-ignore
                 arrayResult = result.sort((a, b) => b.probability - a.probability).filter(i => !isNaN(cutoff) ? i.probability >= cutoff : true).map(i => i.value);
             }
             // @ts-ignore
@@ -63,5 +64,82 @@ export class TTJUtils {
         return null;
     }
 
+    async *streamFetchJson(response) {
+        let jsonLevel = 0;
+        let isString = false;
+        let isEscaped = false;
+        let jsonString = '';
+
+        const reader = await response.body.pipeThrough(new TextDecoderStream()).getReader();
+
+        while (true) {
+            const chunk = await reader.read();
+            if (chunk.done) {
+                return;
+            }
+
+            for (let i = 0; i < chunk.value.length; i++) {
+                const char = chunk.value[i];
+                if ((char === '{' || char === '[') && !isString && !isEscaped) {
+                    jsonLevel++;
+                } else if ((char === '}' || char === ']') && !isString && !isEscaped) {
+                    jsonLevel--;
+                }
+                else if (char === '"' && !isEscaped) {
+                    isString = !isString;
+                }
+
+                if ((char === '\\' && isEscaped) || (char !== '\\')) {
+                    isEscaped = false;
+                }
+                else if (char === '\\') {
+                    isEscaped = true;
+                }
+
+                jsonString += char;
+                if (jsonLevel === 0 && !isString && jsonString.trim() !== '') {
+                    try {
+                        yield JSON.parse(jsonString);
+                        jsonString = '';
+                    } catch (e) {
+                        console.error(e);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * sets the values of the object according to the property mapping, if the value is already set it will not be overwritten
+     * @param {any} object 
+     * @param {any} ttjResponse 
+     * @param {{objPath:string,ttjPath:string}[]} propertyMapping 
+     */
+    setObject(object, ttjResponse, propertyMapping) {
+        for (const mapping of propertyMapping) {
+            const ttjPath = mapping.ttjPath.split('.');
+            const objPath = mapping.objPath.split('.');
+            let obj = object;
+            let ttj = ttjResponse;
+            for (let i = 0; i < ttjPath.length; i++) {
+                if (ttj === undefined || ttj === null) {
+                    break;
+                }
+                ttj = ttj[ttjPath[i]];
+            }
+            if (ttj === undefined || ttj === null) {
+                continue;
+            }
+            for (let i = 0; i < objPath.length - 1; i++) {
+                if (!obj[objPath[i]]) {
+                    obj[objPath[i]] = {};
+                }
+                obj = obj[objPath[i]];
+            }
+            if (obj[objPath[objPath.length - 1]] === undefined || obj[objPath[objPath.length - 1]] === null || obj[objPath[objPath.length - 1]] === '') {
+                obj[objPath[objPath.length - 1]] = ttj;
+            }
+        }
+    }
 
 }

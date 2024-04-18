@@ -74,3 +74,37 @@ test('an invalid mime type for inferDocumentBySchema throws an error', async () 
     const ttjClient = new TTJClient(TTJ_API_TOKEN);
     await expect(ttjClient.inferDocumentBySchema(`data:image/jpeg;base64,${await fs.promises.readFile('tests/testfiles/invoice.jpg', { encoding: 'base64' })}`, 'application/pdf', { a: '<string: value>' }, [{ type: 'raw', name: 'ollama/mixtral', maxcount: 1 }], false)).rejects.toThrow('Invalid mimetype parameter');
 }, 120000);
+
+async function collect(iterator) {
+    const items = [];
+    for await (const item of iterator) {
+        items.push(item);
+    }
+    return items;
+
+}
+
+test('inferStreamingBySchema returns a list of valid objects', async () => {
+    expect.assertions(3);
+    const ttjClient = new TTJClient(TTJ_API_TOKEN);
+    const response = await collect(ttjClient.inferStreamingBySchema(`Unternehmensbezeichnung
+increase advisory GmbH
+UID-Nummer
+ATU74981479
+Unternehmenssitz
+Tummelplatz 19, A-4020 Linz`, {
+        customer: {
+            company_name: '<string: The name of the company>',
+            vat_id: '<string: The VAT (Value Added Tax) identification number of the company>',
+            address: {
+                street: '<string: The street address of the company>',
+                town: '<string: The town or city where the company is located>',
+                zip_code: '<string: The postal code of the company\'s location>'
+            }
+        }
+    }, 'ollama/mixtral'));
+    expect(response.length).toBeGreaterThan(1);
+    expect(response[response.length - 1].customer.company_name).toBe('increase advisory GmbH');
+    expect(response[response.length - 1].customer.vat_id).toBe('ATU74981479');
+
+}, 120000);
