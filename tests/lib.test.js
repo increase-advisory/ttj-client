@@ -108,3 +108,27 @@ Tummelplatz 19, A-4020 Linz`, {
     expect(response[response.length - 1].customer.vat_id).toBe('ATU74981479');
 
 }, 120000);
+
+test('inferStreamingBySchema throws an error for an invalid schema', async () => {
+    const ttjClient = new TTJClient(TTJ_API_TOKEN);
+    await expect(collect(ttjClient.inferStreamingBySchema(`Unternehmensbezeichnung
+increase advisory GmbH
+UID-Nummer
+ATU74981479
+Unternehmenssitz
+Tummelplatz 19, A-4020 Linz`, null, 'ollama/mixtral'))).rejects.toThrow('Missing body parameter schema');
+});
+
+test('inferStreamingByUUID returns a list of valid objects', async () => {
+    expect.assertions(3);
+    const ttjClient = new TTJClient(TTJ_API_TOKEN);
+    const response = await collect(ttjClient.inferStreamingByUUID(`Unternehmensbezeichnung
+increase advisory GmbH
+UID-Nummer
+ATU74981479
+Unternehmenssitz
+Tummelplatz 19, A-4020 Linz`, DEMO_UUID));
+    expect(response.length).toBeGreaterThan(1);
+    expect(response[response.length - 1].customer.company_name).toBe('increase advisory GmbH');
+    expect(response[response.length - 1].customer.vat_id).toBe('ATU74981479');
+}, 120000);

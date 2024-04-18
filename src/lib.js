@@ -215,6 +215,46 @@ export class TTJClient {
         yield* utils.streamFetchJson(response);
     }
 
+    /**
+     * 
+     * @template T
+     * @param {string} text the text to extract the data from
+     * @param {string} uuid the uuid of the schema to use
+     * @returns {AsyncGenerator<T,void,T>}
+     */
+    async *inferStreamingByUUID(text, uuid) {
+        const url = `https://text-to-json.com/api/v1/inferStreaming?apiToken=${this.apiKey}&uuid=${uuid}`;
+        /** @type {any} */
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                input: text
+            }),
+            dispatcher: new Agent({
+                headersTimeout: 20 * 60 * 1000,
+                bodyTimeout: 20 * 60 * 1000,
+            })
+        });
+        if (!response.ok) {
+            const resText = await response.text();
+            let parsedRes;
+            try {
+                parsedRes = JSON.parse(resText);
+            } catch (e) {
+            }
+            if (parsedRes && parsedRes.error) {
+                throw new Error(parsedRes.error);
+            } else {
+                throw new Error(resText);
+            }
+        }
+
+        yield* utils.streamFetchJson(response);
+    }
+
 }
 
 export { TTJUtils };
