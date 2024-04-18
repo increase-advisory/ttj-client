@@ -1,4 +1,14 @@
+import { Agent, fetch } from 'undici';
 import { fetchRetry } from './helper.js';
+import { TTJUtils } from './utils.js';
+const utils = new TTJUtils();
+
+/**
+ * @typedef {{
+ * value:any,
+ * probability:number
+ * }} ProbabilityResult
+*/
 
 export class TTJClient {
     constructor(apiKey) {
@@ -28,7 +38,8 @@ export class TTJClient {
     }
 
     /**
-     * @typedef {'openai/gpt-3.5-turbo'|'openai/gpt-4'|'azure/gpt-35-turbo'|'vertex/text-bison@001'|'ollama/mixtral'|'ollama/llama2'|'ollama/llama2:13b'|'ollama/gemma'} SupportedLanguageModel
+     * @typedef {'openai/gpt-3.5-turbo'|'openai/gpt-4'|'ollama/mixtral'|'ollama/llama2'|'ollama/llama2:13b'|'ollama/gemma'} SupportedStreamingLanguageModel
+     * @typedef {SupportedStreamingLanguageModel|'azure/gpt-35-turbo'|'vertex/text-bison@001'} SupportedLanguageModel
      * @typedef {SupportedLanguageModel | 'vertex/gemini-1.0-pro-vision-001'} SupportedVisionModel
      */
 
@@ -77,7 +88,7 @@ export class TTJClient {
      * @template T
      * @callback ReturnProbabilitiesFunction
      * @param {T} schema
-     * @returns {T extends (string)?{value:any,probability:number}[]: T extends (infer U)[] ? ReturnType<ReturnProbabilitiesFunction<U>>[]: T extends {} ? { [K in keyof T]?: ReturnType<ReturnProbabilitiesFunction<T[K]>> } : {value:any,probability:number}[]}
+     * @returns {T extends (string)?ProbabilityResult[]: T extends (infer U)[] ? ReturnType<ReturnProbabilitiesFunction<U>>[]: T extends {} ? { [K in keyof T]?: ReturnType<ReturnProbabilitiesFunction<T[K]>> } : ProbabilityResult[]}
      * */
 
     /**
@@ -162,6 +173,89 @@ export class TTJClient {
         }
     }
 
+    /**
+     * @template T
+     * @param {string} text the text to extract the data from
+     * @param {T} schema the schema for the data (see https://text-to-json.com/en/docs/#defining-a-schema for more information on schemas)
+     * @param {SupportedStreamingLanguageModel} languageModel 
+     * @returns {AsyncGenerator<ReturnType<TTJParsingFunction<T>>, void, ReturnType<TTJParsingFunction<T>>>}
+     */
+    async *inferStreamingBySchema(text, schema, languageModel) {
+        const url = `https://text-to-json.com/api/v1/inferStreaming?apiToken=${this.apiKey}`;
+        languageModel = languageModel || ('openai/gpt-3.5-turbo');
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                input: text,
+                schema: schema,
+                languageModel
+            }),
+            dispatcher: new Agent({
+                headersTimeout: 20 * 60 * 1000,
+                bodyTimeout: 20 * 60 * 1000,
+            })
+        });
+        if (!response.ok) {
+            const resText = await response.text();
+            let parsedRes;
+            try {
+                parsedRes = JSON.parse(resText);
+            } catch (e) {
+            }
+            if (parsedRes && parsedRes.error) {
+                throw new Error(parsedRes.error);
+            } else {
+                throw new Error(resText);
+            }
+        }
+
+        yield* utils.streamFetchJson(response);
+    }
+
+    /**
+     * 
+     * @template T
+     * @param {string} text the text to extract the data from
+     * @param {string} uuid the uuid of the schema to use
+     * @returns {AsyncGenerator<T,void,T>}
+     */
+    async *inferStreamingByUUID(text, uuid) {
+        const url = `https://text-to-json.com/api/v1/inferStreaming?apiToken=${this.apiKey}&uuid=${uuid}`;
+        /** @type {any} */
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                input: text
+            }),
+            dispatcher: new Agent({
+                headersTimeout: 20 * 60 * 1000,
+                bodyTimeout: 20 * 60 * 1000,
+            })
+        });
+        if (!response.ok) {
+            const resText = await response.text();
+            let parsedRes;
+            try {
+                parsedRes = JSON.parse(resText);
+            } catch (e) {
+            }
+            if (parsedRes && parsedRes.error) {
+                throw new Error(parsedRes.error);
+            } else {
+                throw new Error(resText);
+            }
+        }
+
+        yield* utils.streamFetchJson(response);
+    }
+
 }
 
-
+export { TTJUtils };
