@@ -195,6 +195,7 @@ export class TTJClient {
                 languageModel
             }),
             dispatcher: new Agent({
+                headersTimeout: 20 * 60 * 1000,
                 bodyTimeout: 20 * 60 * 1000,
             })
         });
