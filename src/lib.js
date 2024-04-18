@@ -38,7 +38,7 @@ export class TTJClient {
     }
 
     /**
-     * @typedef {'openai/gpt-3.5-turbo'|'openai/gpt-4'|'ollama/mixtral'|'ollama/llama2'|'ollama/llama2:13b'|'ollama/gemma'} SupportedStreamingLanguageModel
+     * @typedef {'openai/gpt-3.5-turbo'|'openai/gpt-4'|'ollama/mixtral'|'ollama/llama2'|'ollama/llama2:13b'|'ollama/gemma'|'ollama/wizardlm2:7b-fp16'} SupportedStreamingLanguageModel
      * @typedef {SupportedStreamingLanguageModel|'azure/gpt-35-turbo'|'vertex/text-bison@001'} SupportedLanguageModel
      * @typedef {SupportedLanguageModel | 'vertex/gemini-1.0-pro-vision-001'} SupportedVisionModel
      */
