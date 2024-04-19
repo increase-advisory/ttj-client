@@ -141,3 +141,66 @@ test('getMostProbableValidValue returns null if no value passes the validator fu
     const mostProbableValue = ttjUtils.getMostProbableValidValue(result, validatorFn);
     expect(mostProbableValue).toBe(null);
 });
+
+test('streamFetchJson yields JSON objects from a stream', async () => {
+    const stream = new ReadableStream({
+        start(controller) {
+            const input = '{"a": 1, "b": 2}\n{"c": 3, "d": 4}\n';
+            const inputArrayBuffer = new TextEncoder().encode(input);
+            controller.enqueue(inputArrayBuffer);
+            controller.close();
+        }
+    });
+    const response = {
+        body: stream
+    };
+    const ttjUtils = new TTJUtils();
+    const jsonObjects = [];
+    // @ts-ignore because we're mocking the response object
+    for await (const obj of ttjUtils.streamFetchJson(response)) {
+        jsonObjects.push(obj);
+    }
+    expect(jsonObjects).toStrictEqual([{ a: 1, b: 2 }, { c: 3, d: 4 }]);
+});
+
+test('streamFetchJSON can handle escaped quotes', async () => {
+    const stream = new ReadableStream({
+        start(controller) {
+            const input = '{"a": "\\"1", "b": 2}\n{"c": 3, "d": 4}\n';
+            const inputArrayBuffer = new TextEncoder().encode(input);
+            controller.enqueue(inputArrayBuffer);
+            controller.close();
+        }
+    });
+    const response = {
+        body: stream
+    };
+    const ttjUtils = new TTJUtils();
+    const jsonObjects = [];
+    // @ts-ignore because we're mocking the response object
+    for await (const obj of ttjUtils.streamFetchJson(response)) {
+        jsonObjects.push(obj);
+    }
+    expect(jsonObjects).toStrictEqual([{ a: '"1', b: 2 }, { c: 3, d: 4 }]);
+});
+
+test('streamFetchJSON can handle escaped backslashes', async () => {
+    const stream = new ReadableStream({
+        start(controller) {
+            const input = '{"a": "\\\\", "b": 2}\n{"c": 3, "d": 4}\n';
+            const inputArrayBuffer = new TextEncoder().encode(input);
+            controller.enqueue(inputArrayBuffer);
+            controller.close();
+        }
+    });
+    const response = {
+        body: stream
+    };
+    const ttjUtils = new TTJUtils();
+    const jsonObjects = [];
+    // @ts-ignore because we're mocking the response object
+    for await (const obj of ttjUtils.streamFetchJson(response)) {
+        jsonObjects.push(obj);
+    }
+    expect(jsonObjects).toStrictEqual([{ a: '\\', b: 2 }, { c: 3, d: 4 }]);
+});
