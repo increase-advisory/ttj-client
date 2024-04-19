@@ -196,3 +196,66 @@ infer();
 }
 */
 ```
+
+## Streaming Responses
+
+You can also get an async generator that always returns the current state of the extraction by using the `inferStreamingBySchema` method.
+
+```javascript
+async function infer(){
+    //...
+    for await (const response of ttjClient.inferStreamingBySchema(
+        'company name: Acme Corp\na street 123\n1234 Town', 
+        {
+            customer: {
+                company_name: 'string',
+                address: {
+                    street: 'string',
+                    zip_code: 'number',
+                    city: 'string'
+                }
+            }
+        }, 
+        'openai/gpt-3.5-turbo')) {
+            
+        console.log(JSON.stringify(response));
+    }
+}
+
+infer();
+/* logs
+{"customer":{}}
+{"customer":{"company_name":"Acme Corp"}}
+{"customer":{"company_name":"Acme Corp","address":{}}}
+{"customer":{"company_name":"Acme Corp","address":{"street":"a street 123"}}}
+{"customer":{"company_name":"Acme Corp","address":{"street":"a street 123","zip_code":1234}}}
+{"customer":{"company_name":"Acme Corp","address":{"street":"a street 123","zip_code":1234,"city":"Town"}}}
+*/
+```
+
+### using a model defined on the website
+
+You can also use a model defined on the website using `inferStreamingByUUID`.
+
+```javascript
+async function infer(){
+    //...
+    for await (const response of ttjClient.inferStreamingByUUID(
+            'company name: Acme Corp\na street 123\n1234 Town',
+            YOUR_UUID
+        )) {
+            
+        console.log(JSON.stringify(response));
+    }
+}
+
+infer();
+/* logs
+{"customer":{}}
+{"customer":{"company_name":"Acme Corp"}}
+{"customer":{"company_name":"Acme Corp","address":{}}}
+{"customer":{"company_name":"Acme Corp","address":{"street":"a street 123"}}}
+{"customer":{"company_name":"Acme Corp","address":{"street":"a street 123","zip_code":1234}}}
+{"customer":{"company_name":"Acme Corp","address":{"street":"a street 123","zip_code":1234,"city":"Town"}}}
+*/
+```
