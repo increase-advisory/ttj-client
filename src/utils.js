@@ -66,7 +66,7 @@ export class TTJUtils {
 
     /**
      * 
-     * @param {Response} response 
+     * @param {Response|import('undici').Response} response 
      * @returns 
      */
     async *streamFetchJson(response) {
@@ -75,7 +75,9 @@ export class TTJUtils {
         let isEscaped = false;
         let jsonString = '';
 
-        const reader = response.body.pipeThrough(new TextDecoderStream()).getReader();
+        /** @type {ReadableStream<Uint8Array>} */
+        const body = response.body;
+        const reader = body.pipeThrough(new TextDecoderStream()).getReader();
 
         while (true) {
             const chunk = await reader.read();
