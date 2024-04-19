@@ -64,13 +64,18 @@ export class TTJUtils {
         return null;
     }
 
+    /**
+     * 
+     * @param {Response} response 
+     * @returns 
+     */
     async *streamFetchJson(response) {
         let jsonLevel = 0;
         let isString = false;
         let isEscaped = false;
         let jsonString = '';
 
-        const reader = await response.body.pipeThrough(new TextDecoderStream()).getReader();
+        const reader = response.body.pipeThrough(new TextDecoderStream()).getReader();
 
         while (true) {
             const chunk = await reader.read();
@@ -87,12 +92,9 @@ export class TTJUtils {
                 }
                 else if (char === '"' && !isEscaped) {
                     isString = !isString;
-                }
-
-                if ((char === '\\' && isEscaped) || (char !== '\\')) {
+                } else if ((char === '\\' && isEscaped) || (char !== '\\')) {
                     isEscaped = false;
-                }
-                else if (char === '\\') {
+                } else if (char === '\\') {
                     isEscaped = true;
                 }
 
