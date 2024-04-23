@@ -19,6 +19,7 @@ test('an invalid uuid throws an error', async () => {
 
 test('a valid uuid and api token return a response', async () => {
     const ttjClient = new TTJClient(TTJ_API_TOKEN);
+    /** @type {any} */
     const response = await ttjClient.inferByUUID('company name: acme corp\na street 123\n1234 Town', DEMO_UUID);
     expect(response.customer.company_name).toBe('acme corp');
 }, 120000);

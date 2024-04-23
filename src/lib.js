@@ -5,7 +5,7 @@ const utils = new TTJUtils();
 
 /**
  * @typedef {{
- * value:any,
+ * value:unknown,
  * probability:number
  * }} ProbabilityResult
 */
@@ -20,7 +20,7 @@ export class TTJClient {
      * @template T
      * @param {string} text the text to extract the data from
      * @param {string} uuid the uuid of the schema to use
-     * @returns {Promise<T>}
+     * @returns {Promise<ReturnType<TTJParsingFunction<T>>>}
      */
     async inferByUUID(text, uuid) {
         const url = `https://text-to-json.com/api/v1/infer?apiToken=${this.apiKey}&uuid=${uuid}`;
@@ -44,7 +44,7 @@ export class TTJClient {
      */
 
     /**
-     * @template T
+     * @template {NestedStringProperties} T
      * @param {string} text the text to extract the data from
      * @param {T} schema the schema for the data (see https://text-to-json.com/en/docs/#defining-a-schema for more information on schemas)
      * @param {SupportedLanguageModel} languageModel 
@@ -53,8 +53,7 @@ export class TTJClient {
     async inferBySchema(text, schema, languageModel) {
         const url = `https://text-to-json.com/api/v1/infer?apiToken=${this.apiKey}`;
         languageModel = languageModel || ('openai/gpt-3.5-turbo');
-        /** @type {any} */
-        const response = await fetchRetry(url, {
+        const response = /** @type {ReturnType<TTJParsingFunction<T>>} */ (await fetchRetry(url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -64,7 +63,7 @@ export class TTJClient {
                 schema: schema,
                 languageModel
             })
-        }).then(r => r.json());
+        }).then(r => r.json()));
         return response;
     }
 
@@ -92,10 +91,21 @@ export class TTJClient {
      * */
 
     /**
-     * @template T
+     * @typedef {{[key: string|number|symbol]: string | StringPropertyObject | StringPropertyObjectArray}} StringPropertyObject
+     * 
+     * @typedef {Array<StringPropertyObject>} StringPropertyObjectArray
+     * 
+     * @typedef {StringPropertyObject | StringPropertyObjectArray} NestedStringProperties
+     * 
+     * 
+     * 
+     */
+
+    /**
+     * @template {NestedStringProperties} T
      * @callback TTJParsingFunction
      * @param {T} schema
-     * @returns {{[K in keyof T]?:T[K]extends {}?ReturnType<TTJParsingFunction<T[K]>>:T[K]}}
+     * @returns {{[K in keyof T]?:T[K] extends (string)?unknown:T[K] extends (infer U)[]?ReturnType<TTJParsingFunction<U>>[]:T[K]extends {}?ReturnType<TTJParsingFunction<T[K]>>:never}}
      * */
 
 
@@ -123,8 +133,8 @@ export class TTJClient {
         if (data instanceof Buffer) {
             data = `data:${mimetype};base64,${data.toString('base64')}`;
         }
-        /** @type {any} */
-        const parsingRequestResponse = await fetch(url, {
+
+        const parsingRequestResponse = /** @type {{id?:string, error?:string}} */ (await fetch(url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -136,7 +146,7 @@ export class TTJClient {
                 parsingsteps,
                 returnprobabilities
             })
-        }).then(r => r.json());
+        }).then(r => r.json()));
         if (!parsingRequestResponse.id) {
             if (parsingRequestResponse.error) {
                 if (typeof parsingRequestResponse.error === 'string' && /^\d+:\d+/.test(parsingRequestResponse.error)) {
@@ -174,7 +184,7 @@ export class TTJClient {
     }
 
     /**
-     * @template T
+     * @template {NestedStringProperties} T
      * @param {string} text the text to extract the data from
      * @param {T} schema the schema for the data (see https://text-to-json.com/en/docs/#defining-a-schema for more information on schemas)
      * @param {SupportedStreamingLanguageModel} languageModel 
@@ -218,14 +228,14 @@ export class TTJClient {
 
     /**
      * 
-     * @template T
+     * @template {NestedStringProperties} T
      * @param {string} text the text to extract the data from
      * @param {string} uuid the uuid of the schema to use
      * @returns {AsyncGenerator<T,void,T>}
      */
     async *inferStreamingByUUID(text, uuid) {
         const url = `https://text-to-json.com/api/v1/inferStreaming?apiToken=${this.apiKey}&uuid=${uuid}`;
-        /** @type {any} */
+        /** @type {import('undici').Response} */
         const response = await fetch(url, {
             method: 'POST',
             headers: {

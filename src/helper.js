@@ -1,5 +1,13 @@
 import { fetch, Agent } from 'undici';
 
+/**
+ * 
+ * @param {string} url 
+ * @param {import('undici').RequestInit} options 
+ * @param {number} retries 
+ * @param {number} backoff 
+ * @returns {Promise<import('undici').Response>}
+ */
 export async function fetchRetry(url, options, retries = 1, backoff = 3000) {
     try {
         const optionsWithCustomDispatcher = {
