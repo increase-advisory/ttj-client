@@ -113,7 +113,7 @@ export class TTJClient {
      * 
      * @template S
      * @template {boolean} R
-     * @param {Buffer|Uint8Array|string} data a pdf, png, or jpeg file as a buffer, uint8array or dataurl
+     * @param {Buffer|Uint8Array|string|ArrayBuffer} data a pdf, png, or jpeg file as a buffer, uint8array or dataurl
      * @param {'application/pdf'|'image/png'|'image/jpeg'} mimetype the mimetype of the data (e.g. 'application/pdf', 'image/png', 'image/jpeg')
      * @param {S} schema
      * @param {(TextParsingStep|ImageParsingStep)[]=} parsingsteps
@@ -124,6 +124,9 @@ export class TTJClient {
     async inferDocumentBySchema(data, mimetype, schema, parsingsteps, returnprobabilities) {
         const url = `https://text-to-json.com/api/v1/inferDocument?apiToken=${this.apiKey}`;
 
+        if (data instanceof ArrayBuffer) {
+            data = new Uint8Array(data);
+        }
         //if data is a uint8array, convert it to a buffer
         if (data instanceof Uint8Array) {
             data = Buffer.from(data);
